@@ -50,8 +50,15 @@ class RA08H:
         else:
             return {'status': 'error'}
 
-    
-
+    def read_join_mode(self):
+        at_command = b"AT+CJOINMODE?\r\n"
+        request = self.send_command(at_command, 0.5)
+        print(request)
+        if request[2] == 'OK':
+            if request[1] == '+CJOINMODE:0':
+                return 'OTAA'
+            elif request[1] == '+CJOINMODE:1':
+                return 'ABR'
 
 if __name__ == "__main__":
     ra = RA08H('COM7', 9600)
@@ -59,3 +66,4 @@ if __name__ == "__main__":
     print(ra.read_model_identification())
     print(ra.read_version_identification())
     print(ra.read_product_sequence_number())
+    print(ra.read_join_mode())
