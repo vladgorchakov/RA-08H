@@ -2,6 +2,13 @@ import serial
 from time import sleep
 
 
+class JoinModeException(Exception):
+    def __init__(self, join_mode):
+        self.join_mode = join_mode
+
+    def __str__(self):
+        return f"Mode {self.join_mode} is not correct. Join mode must be OTAA or ABR."
+
 class RA08H:
     def __init__(self, port, baudrate):
         self.uart = serial.Serial(port=port, baudrate=baudrate)
@@ -16,6 +23,7 @@ class RA08H:
         self.uart.write(command)
         sleep(timeout)
         return self.uart.read_all().decode("utf-8").split("\r\n")
+
 
     def read_manufacturer_identification(self) -> dict:
         at_command = b"AT+CGMI?\r\n"
@@ -53,12 +61,23 @@ class RA08H:
     def read_join_mode(self):
         at_command = b"AT+CJOINMODE?\r\n"
         request = self.send_command(at_command, 0.5)
-        print(request)
         if request[2] == 'OK':
             if request[1] == '+CJOINMODE:0':
                 return 'OTAA'
             elif request[1] == '+CJOINMODE:1':
                 return 'ABR'
+
+    def set_join_mode(self, mode):
+        if mode == 'OTTA':
+            at_command = b"AT+CJOINMODE=0\r\n"
+        elif mode == 'ABR':
+            at_command = b"AT+CJOINMODE=1\r\n"
+        else:
+            raise JoinModeException(mode)
+
+        request = self.send_command(at_command, 0.5)
+        if request[1] == 'OK':
+            return True
 
 if __name__ == "__main__":
     ra = RA08H('COM7', 9600)
@@ -67,3 +86,4 @@ if __name__ == "__main__":
     print(ra.read_version_identification())
     print(ra.read_product_sequence_number())
     print(ra.read_join_mode())
+    print(ra.set_join_mode('OTTA'))
