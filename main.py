@@ -9,9 +9,18 @@ class JoinModeException(Exception):
     def __str__(self):
         return f"Mode {self.join_mode} is not correct. Join mode must be OTAA or ABR."
 
+
+class BaudrateException(Exception):
+    def __init__(self, baudrate):
+        self.baudrate = baudrate
+
+    def __str__(self):
+        return f"{self.baudrate} is invalid. Baudrate should not be more than 9600"
+
 class RA08H:
     def __init__(self, port, baudrate):
         self.uart = serial.Serial(port=port, baudrate=baudrate)
+
 
     def connect(self):
         self.uart.open()
@@ -24,10 +33,10 @@ class RA08H:
         sleep(timeout)
         return self.uart.read_all().decode("utf-8").split("\r\n")
 
-
     def read_manufacturer_identification(self) -> dict:
         at_command = b"AT+CGMI?\r\n"
-        request = self.send_command(at_command, 0.5)
+        request = self.send_command(at_command, 1)
+        print(request)
 
         if request[2] == 'OK':
             return {'status': request[2], 'manufacturer': request[1][6:]}
@@ -58,6 +67,18 @@ class RA08H:
         else:
             return {'status': 'error'}
 
+    def read_baudrate(self):
+        at_command = b"AT+CGBR?\r\n"
+        request = self.send_command(at_command, 0.5)
+        if request[2] == 'OK':
+            return request[1][6:]
+
+    def set_baudrate(self, baudrate):
+        if baudrate > 9600:
+            raise BaudrateException(baudrate)
+        at_command = bytes(f"AT+CGBR={baudrate}\r\n".encode())
+        self.uart.write(at_command)
+
     def read_join_mode(self):
         at_command = b"AT+CJOINMODE?\r\n"
         request = self.send_command(at_command, 0.5)
@@ -87,3 +108,5 @@ if __name__ == "__main__":
     print(ra.read_product_sequence_number())
     print(ra.read_join_mode())
     print(ra.set_join_mode('OTTA'))
+    print(ra.read_baudrate())
+    print(ra.read_manufacturer_identification())
