@@ -22,7 +22,15 @@ class RA08H:
         request = self.send_command(at_command, 0.5)
 
         if request[2] == 'OK':
-            return {'status': request[2], 'manufacter': request[1][6:]}
+            return {'status': request[2], 'manufacturer': request[1][6:]}
+        else:
+            return {'status': 'error'}
+
+    def read_model_identification(self):
+        at_command = b"AT+CGMM?\r\n"
+        request = self.send_command(at_command, 0.5)
+        if request[2] == 'OK':
+            return {'status': request[2], 'model_id': request[1][6:]}
         else:
             return {'status': 'error'}
 
@@ -30,3 +38,5 @@ class RA08H:
 if __name__ == "__main__":
     ra = RA08H('COM7', 9600)
     print(ra.read_manufacturer_identification())
+    print(ra.read_model_identification())
+
