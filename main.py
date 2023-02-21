@@ -30,13 +30,32 @@ class RA08H:
         at_command = b"AT+CGMM?\r\n"
         request = self.send_command(at_command, 0.5)
         if request[2] == 'OK':
-            return {'status': request[2], 'model_id': request[1][6:]}
+            return {'status': request[2], 'model': request[1][6:]}
         else:
             return {'status': 'error'}
+
+    def read_version_identification(self):
+        at_command = b"AT+CGMR?\r\n"
+        request = self.send_command(at_command, 0.5)
+        if request[2] == 'OK':
+            return {'status': request[2], 'version': request[1][6:]}
+        else:
+            return {'status': 'error'}
+
+    def read_product_sequence_number(self):
+        at_command = b"AT+CGSN?\r\n"
+        request = self.send_command(at_command, 0.5)
+        if request[2] == 'OK':
+            return {'status': request[2], 'sn': request[1][6:]}
+        else:
+            return {'status': 'error'}
+
+    
 
 
 if __name__ == "__main__":
     ra = RA08H('COM7', 9600)
     print(ra.read_manufacturer_identification())
     print(ra.read_model_identification())
-
+    print(ra.read_version_identification())
+    print(ra.read_product_sequence_number())
