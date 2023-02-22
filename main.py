@@ -15,6 +15,20 @@ class OTAAJoinModeException(Exception):
         return f'The method should only be used for OTAA join mod.'
 
 
+class ABPJoinModeException(Exception):
+    def __str__(self):
+        return f'The method should only be used for ABP join mod.'
+
+
+class SizeDevAddrException(Exception):
+    def __init__(self, size):
+        self.correct_size = 8
+        self.incorrect_size = size
+
+    def __str__(self):
+        return f'DevAddr size should be {self.correct_size} not {self.incorrect_size}'
+
+
 class RA08H:
     def __init__(self, port, baudrate):
         self.uart = serial.Serial(port=port, baudrate=baudrate)
@@ -76,12 +90,12 @@ class RA08H:
         if mode == '0':
             return 'OTAA'
         else:
-            return 'ABR'
+            return 'ABP'
 
     def set_join_mode(self, mode):
         if mode == 'OTAA':
             at_command = b"AT+CJOINMODE=0\r\n"
-        elif mode == 'ABR':
+        elif mode == 'ABP':
             at_command = b"AT+CJOINMODE=1\r\n"
         else:
             raise BaudrateException(mode)
@@ -118,6 +132,19 @@ class RA08H:
         else:
             raise OTAAJoinModeException
 
+    def read_dev_addr(self):
+        at_command = b"AT+CDEVADDR?\r\n"
+        return self.parse(self.send_command(at_command, 0.5))
+
+    def set_dev_addr(self, addr):
+        at_command = bytes(f"AT+CDEVADDR={addr}\r\n".encode())
+        if len(addr) == 8:
+            if self.read_join_mode() == "ABP":
+                return self.check_setting(self.send_command(at_command, 0.5))
+            else:
+                raise ABPJoinModeException
+        else:
+            raise SizeDevAddrException(len(addr))
 
 
 if __name__ == "__main__":
@@ -127,10 +154,13 @@ if __name__ == "__main__":
     # print(ra.read_version_identification())
     # print(ra.read_product_sequence_number())
     # print(ra.read_join_mode())
-    # print(ra.set_join_mode('OTAA'))
+    print(ra.set_join_mode('ABP'))
     # print(ra.set_dev_eui("1000000030000005"))
     # print(ra.read_dev_eui())
     # print(ra.set_app_eui("0000000000000099"))
     # print(ra.read_app_eui())
-    print(ra.set_app_key("20000000000000000000000000000004"))
-    print(ra.read_app_key())
+    # print(ra.set_app_key("20000000000000000000000000000004"))
+    # print(ra.read_app_key())
+    print(ra.set_dev_addr("007E6AE12"))
+    print(ra.read_dev_addr())
+
