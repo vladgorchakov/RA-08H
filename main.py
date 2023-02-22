@@ -2,14 +2,6 @@ import serial
 from time import sleep
 
 
-class JoinModeException(Exception):
-    def __init__(self, join_mode):
-        self.join_mode = join_mode
-
-    def __str__(self):
-        return f"Mode {self.join_mode} is not correct. Join mode must be OTAA or ABR."
-
-
 class BaudrateException(Exception):
     def __init__(self, baudrate):
         self.baudrate = baudrate
@@ -18,7 +10,7 @@ class BaudrateException(Exception):
         return f"{self.baudrate} is invalid. Baudrate should not be more than 9600"
 
 
-class SetAppKeyException(Exception):
+class OTAAJoinModeException(Exception):
     def __str__(self):
         return f'The method should only be used for OTAA join mod.'
 
@@ -92,7 +84,7 @@ class RA08H:
         elif mode == 'ABR':
             at_command = b"AT+CJOINMODE=1\r\n"
         else:
-            raise JoinModeException(mode)
+            raise BaudrateException(mode)
 
         return self.check_setting(self.send_command(at_command, 0.5))
 
@@ -110,7 +102,10 @@ class RA08H:
 
     def set_app_eui(self, app_eui):
         at_command = bytes(f"AT+CAPPEUI={app_eui}\r\n".encode())
-        return self.check_setting(self.send_command(at_command, 0.5))
+        if self.read_join_mode() == "OTAA":
+            return self.check_setting(self.send_command(at_command, 0.5))
+        else:
+            raise OTAAJoinModeException
 
     def read_app_key(self):
         at_command = b"AT+CAPPKEY?\r\n"
@@ -121,7 +116,7 @@ class RA08H:
         if self.read_join_mode() == "OTAA":
             return self.check_setting(self.send_command(at_command, 0.5))
         else:
-            raise SetAppKeyException
+            raise OTAAJoinModeException
 
 
 
