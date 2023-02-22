@@ -1,6 +1,6 @@
 import serial
 from time import sleep
-from lora_exception import *
+from exceptions import *
 
 
 class RA08H:
