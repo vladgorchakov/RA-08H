@@ -18,6 +18,11 @@ class BaudrateException(Exception):
         return f"{self.baudrate} is invalid. Baudrate should not be more than 9600"
 
 
+class SetAppKeyException(Exception):
+    def __str__(self):
+        return f'The method should only be used for OTAA join mod.'
+
+
 class RA08H:
     def __init__(self, port, baudrate):
         self.uart = serial.Serial(port=port, baudrate=baudrate)
@@ -39,6 +44,13 @@ class RA08H:
                 return request[1].split(':')[1]
             elif '=' in request[1]:
                 return request[1].split('=')[1]
+
+    def check_setting(self, request):
+        print(request)
+        if request[1] == 'OK':
+            return True
+        else:
+            return False
 
     def read_manufacturer_identification(self) -> dict:
         at_command = b"AT+CGMI?\r\n"
@@ -82,9 +94,7 @@ class RA08H:
         else:
             raise JoinModeException(mode)
 
-        request = self.send_command(at_command, 0.5)
-        if request[1] == 'OK':
-            return True
+        return self.check_setting(self.send_command(at_command, 0.5))
 
     def read_dev_eui(self):
         at_command = b"AT+CDEVEUI?\r\n"
@@ -92,10 +102,7 @@ class RA08H:
 
     def set_dev_eui(self, devEUI):
         at_command = bytes(f"AT+CDEVEUI={devEUI}\r\n".encode())
-        request = self.send_command(at_command, 0.5)
-
-        if request[1] == "OK":
-            return True
+        return self.check_setting(self.send_command(at_command, 0.5))
 
     def read_app_eui(self):
         at_command = b"AT+CAPPEUI?\r\n"
@@ -103,21 +110,32 @@ class RA08H:
 
     def set_app_eui(self, app_eui):
         at_command = bytes(f"AT+CAPPEUI={app_eui}\r\n".encode())
-        request = self.send_command(at_command, 0.5)
+        return self.check_setting(self.send_command(at_command, 0.5))
 
-        if request[1] == 'OK':
-            return True
+    def read_app_key(self):
+        at_command = b"AT+CAPPKEY?\r\n"
+        return self.parse(self.send_command(at_command, 0.5))
+
+    def set_app_key(self, app_key):
+        at_command = bytes(f"AT+CAPPKEY={app_key}\r\n".encode())
+        if self.read_join_mode() == "OTAA":
+            return self.check_setting(self.send_command(at_command, 0.5))
+        else:
+            raise SetAppKeyException
+
 
 
 if __name__ == "__main__":
     ra = RA08H('COM7', 9600)
-    print(ra.read_manufacturer_identification())
-    print(ra.read_model_identification())
-    print(ra.read_version_identification())
-    print(ra.read_product_sequence_number())
-    print(ra.read_join_mode())
-    print(ra.set_join_mode('ABR'))
-    print(ra.set_dev_eui("1000000030000005"))
-    print(ra.read_dev_eui())
-    print(ra.set_app_eui("0000000000000099"))
-    print(ra.read_app_eui())
+    # print(ra.read_manufacturer_identification())
+    # print(ra.read_model_identification())
+    # print(ra.read_version_identification())
+    # print(ra.read_product_sequence_number())
+    # print(ra.read_join_mode())
+    # print(ra.set_join_mode('OTAA'))
+    # print(ra.set_dev_eui("1000000030000005"))
+    # print(ra.read_dev_eui())
+    # print(ra.set_app_eui("0000000000000099"))
+    # print(ra.read_app_eui())
+    print(ra.set_app_key("20000000000000000000000000000004"))
+    print(ra.read_app_key())
