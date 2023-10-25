@@ -1,1 +1,1 @@
-# Python library for AI Ra-08H LoRaWAN module
+# ESP32 microPython library for LoRaWAN module AI RA08H
