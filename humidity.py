@@ -84,19 +84,7 @@ class HumSensor:
     
 
 def main() -> None:
-    hudm = HumSensor(18)
-    print(f'*Sensor*\nName: {hudm.name}; Place: {hudm.place}')
-    
-    #1 using humidity and temp properties
-    print(f'Temperature: {hudm.temp}')
-    time.sleep(1)
-    print(f'Hudmitity: {hudm.humidity}')
-    time.sleep(1)
-    
-    #2 using humtemp propertyss
-    hudm_temp = hudm.humtemp
-    print(f'Temperature: {hudm_temp[0]}')
-    print(f'Hudmitity: {hudm_temp[1]}')
+    pass
 
 
 if __name__=='__main__':
